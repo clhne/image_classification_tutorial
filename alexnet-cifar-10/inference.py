@@ -1,6 +1,6 @@
 #coding=utf-8
 import sys,os,psutil,time
-import cProfile,re
+import cProfile,re,pstats,io
 import numpy as np
 import tensorflow as tf
 from sklearn.metrics import confusion_matrix
@@ -60,10 +60,15 @@ def inference():
     inferenec_end = time.time()
     print("".join(class_numbers))
     print ('Time used: {:} s,Memory used: {:.2f} MB'.format(inferenec_end - inferenec_start,memory))
-
     sess.close()
+
 prof = cProfile.Profile()
 prof.enable()
 inference()
+#prof.disable()
+s = io.StringIO()
+sort_by = 'time'
+ps = pstats.Stats(prof,stream = s).sort_stats(sort_by)
 prof.create_stats()
 prof.print_stats()
+print(s.getvalue())
