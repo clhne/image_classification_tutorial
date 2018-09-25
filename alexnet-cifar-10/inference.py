@@ -1,6 +1,7 @@
 #coding=utf-8
-import sys,os,psutil,time
+import sys,os,psutil,time,random
 import cProfile,re,pstats,io
+from line_profiler import LineProfiler
 import numpy as np
 import tensorflow as tf
 from sklearn.metrics import confusion_matrix
@@ -13,9 +14,10 @@ pid = os.getpid()
 p = psutil.Process(pid)
 info = p.memory_full_info()
 memory = info.uss / 1024. / 1024.
-
 inferenec_start = time.time()
-@profile
+
+@profile   #run: kernpro -l -v inference.py or python -m memory_profiler inference.py
+#when use line_profiler comment out @profile, run: python inference.py
 def inference():
     test_x, test_y, test_l = get_data_set("test", cifar=10)
     x, y, output, global_step, y_pred_cls = model()
@@ -61,14 +63,18 @@ def inference():
     print("".join(class_numbers))
     print ('Time used: {:} s,Memory used: {:.2f} MB'.format(inferenec_end - inferenec_start,memory))
     sess.close()
-
-prof = cProfile.Profile()
-prof.enable()
+#cProfile and line_profiler info
+#prof = cProfile.Profile()
+lp = LineProfiler(inference)
+lp.enable()
+#prof.enable()
 inference()
 #prof.disable()
 s = io.StringIO()
 sort_by = 'time'
-ps = pstats.Stats(prof,stream = s).sort_stats(sort_by)
-prof.create_stats()
-prof.print_stats()
+#ps = pstats.Stats(prof,stream = s).sort_stats(sort_by)
+#prof.create_stats()
+#prof.print_stats()
 print(s.getvalue())
+lp.disable()
+lp.print_stats(sys.stdout)
